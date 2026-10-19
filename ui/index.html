@@ -1,6 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Role Lens v3 · Positions & Candidates</title><link rel="stylesheet" href="/style.css"></head><body>
-<header><a class="brand" href="#">◈ ROLE LENS <small>v3</small></a><span>POSITIONS & CANDIDATES</span><span class="badge">Local workspace · Human review</span></header>
+<header><a class="brand" href="#">◈ ROLE LENS <small>v3</small></a><span>POSITIONS & CANDIDATES</span><span class="badge">Local workspace · Human review</span><button id="notificationButton" aria-label="Notifications">Notifications <span id="notificationCount">0</span></button></header>
 <main><div id="status" role="status">Loading your workspace…</div><div id="main"></div></main>
 <dialog id="detail"><button class="close" aria-label="Close details">✕</button><div id="detailBody"></div></dialog>
 <dialog id="uploadDialog"><button class="close" aria-label="Close upload">✕</button><div id="uploadBody"></div></dialog>
-<div id="toast" role="status" hidden></div><script type="module" src="/app.js"></script></body></html>
+<dialog id="notifications"><button class="close" aria-label="Close notifications">✕</button><h2>Notifications</h2><p class="subtle">Completion and failure notices for your uploads. The latest 100 are kept in this browser.</p><button id="clearNotifications">Clear notifications</button><div id="notificationList"></div></dialog>
+<div id="announcements" role="status" aria-live="polite" class="sr-only"></div><div id="toast" role="status" hidden></div><script type="module" src="/app.js"></script></body></html>

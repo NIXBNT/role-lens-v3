@@ -39,7 +39,7 @@ test('uploaded role and CV survive restart; removal and undo persist on disk',as
  const dir=await workspace(t);let app=await start(dir,{requestOverride:liveMock});
  const role=await json(app.base,'/api/jobs','POST',{document});assert.equal(role.status,201);assert.equal(role.data.candidates.length,0);
  const id=role.data.id;const candidate=await json(app.base,`/api/jobs/${id}/candidates`,'POST',{document:{...document,filename:'CV.md'},label:'Local test candidate'});assert.equal(candidate.status,201);assert.ok(candidate.data.score>66&&candidate.data.score<67);await app.close();
- app=await start(dir,{requestOverride:liveMock});t.after(()=>app.close());const saved=await json(app.base,`/api/jobs/${id}`);assert.equal(saved.data.candidates[0].label,'Local test candidate');
+ app=await start(dir,{apiKey:''});t.after(()=>app.close());assert.equal((await json(app.base,'/api/health')).data.apiKeyConfigured,false);const saved=await json(app.base,`/api/jobs/${id}`);assert.equal(saved.data.candidates[0].label,'Local test candidate');
  await json(app.base,`/api/jobs/${id}/candidates/${candidate.data.id}`,'DELETE');assert.equal((await json(app.base,`/api/jobs/${id}`)).data.candidates.length,0);
  await json(app.base,`/api/jobs/${id}/candidates/${candidate.data.id}/restore`,'POST',{});assert.equal((await json(app.base,`/api/jobs/${id}`)).data.candidates.length,1);
  await json(app.base,`/api/jobs/${id}`,'DELETE');assert.equal((await json(app.base,`/api/jobs/${id}`)).status,404);

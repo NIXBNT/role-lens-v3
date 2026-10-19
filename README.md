@@ -26,12 +26,20 @@ The server binds only to `127.0.0.1`. It is intended for one trusted local user,
 
 ## Use
 
-1. Choose a saved position on the searchable home page, or click **Add a position** and upload a job description. A role-only rubric is created before any CV is evaluated.
-2. Within a position, click **Add candidate CVs**. Upload up to 20 files in the interface; completed candidates save individually. Rank scores are calculated from that role's saved rubric.
+1. Choose a saved position on the searchable home page, or click **Add positions** and select up to 20 job descriptions. Each file creates its own position and rubric. For a batch, titles are extracted from each document and the optional company applies to every file. A title override is available for a single file.
+2. Within a position, click **Add candidate CVs**. Upload up to 20 files in the interface; completed candidates save individually. Position uploads and CV uploads are separate queues, and a failed file does not stop the remaining files. Rank scores are calculated from that role's saved rubric.
 3. Open a candidate or a score in **Compare classifications** for verified source quotes, gaps, interview prompts and raw Decisions output. **Role & rubric** shows the full question set; **Export results** downloads the position's JSON.
 4. Use **Remove** to hide a position or candidate, and **Undo** to restore the most recently removed item. Removing a candidate affects only its position. These are soft removals, not permanent erasure.
 
 Supported files: PDF, Markdown (`.md`) and DOCX, up to 10 MB per file. PDF must contain readable text; scans require OCR first. PDF is capped at 150 pages. DOCX body paragraphs and tables are read; headers, text boxes and images are omitted. Extracted documents must contain 50–120,000 characters.
+
+## Processing notifications
+
+Each uploaded position or CV receives an individual completion or failure notice. The upload dialog shows queued, processing, completed and failed files. A batch summary reports totals. Open **Notifications** in the header for details and unread counts; the latest 100 notices are stored in this browser, survive reloads and can be cleared. If browser storage is blocked, notifications still work for the current page. These are in-app notices, not desktop/background notifications. Keep the page open until a batch finishes. Filenames and errors in notification history remain on this browser; no key or document text is stored there.
+
+## Running without an API key
+
+Startup, the empty workspace, viewing saved positions/results, exports, removal and Undo work without a key. New rubric generation or CV classification still requires a valid key. Without one, the server returns a clear configuration error before making an OpenAI request; each failed upload is reported in Notifications. Automated tests explicitly start a server with an empty key and reopen saved results without a key.
 
 ## Data and models
 

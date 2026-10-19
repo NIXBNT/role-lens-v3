@@ -25,7 +25,7 @@ The home page lists active positions, their companies, classification counts and
 
 ### Add a position
 
-The user selects one PDF, Markdown or DOCX file, with optional title and company overrides. The browser extracts its text and POSTs structured document sections to the local server. Sol receives only the role, not candidate CVs, and creates 8–12 criteria. A criterion contains a unique identifier, title, question, role basis, positive weight, preferred flag and four ordered evidence levels. Weights must sum to 100, and identifiers must satisfy a bounded alphanumeric/underscore/hyphen pattern.
+The user selects 1–20 PDF, Markdown or DOCX files. Each file is processed sequentially and creates an independent position. An optional company applies to all files; a title override is accepted only for a single-file selection. A file failure is recorded and remaining files continue. The browser extracts its text and POSTs structured document sections to the local server. Sol receives only the role, not candidate CVs, and creates 8–12 criteria. A criterion contains a unique identifier, title, question, role basis, positive weight, preferred flag and four ordered evidence levels. Weights must sum to 100, and identifiers must satisfy a bounded alphanumeric/underscore/hyphen pattern.
 
 A valid role and rubric are saved as a new UUID position before the UI opens its empty candidate list. No candidate evaluation occurs at this stage. A failed API call or invalid generated rubric leaves no partial position record. Progress is displayed while the request is pending; the upload dialog cannot be dismissed during processing.
 
@@ -35,7 +35,7 @@ The UI accepts up to 20 files per selection and processes them sequentially. Eac
 
 Decisions answers one score question per saved criterion against the CV text. Sol separately extracts supporting quotations, source locations, gaps and interview prompts; it does not replace Decisions scores. Every displayed quotation must match the cited extracted section after whitespace normalization. Unmatched proposed quotes are omitted and the omission is recorded. Missing, duplicate, refused or invalid classification answers prevent saving a misleading ranking.
 
-A completed candidate is saved separately and scored. When a later file fails, earlier successes remain saved and the dialog reports the failures. If a position was removed during evaluation, the new candidate is not saved. Batch-size enforcement is in the UI; each backend request contains one CV.
+A completed candidate is saved separately and scored. Both position and candidate batches share the sequential queue in `ui/batch.mjs`, with per-file state and completion callbacks. When a later file fails, earlier successes remain saved and the dialog reports the failures. If a position was removed during evaluation, the new candidate is not saved. Batch-size enforcement is in the UI; each backend request contains one CV.
 
 ### Results and removal
 
@@ -46,6 +46,16 @@ A completed candidate is saved separately and scored. When a later file fails, e
 - Removing a candidate affects only that position. Removing a position hides its entire candidate list. Both actions write a persistent `deleted` flag; records remain on disk.
 - Undo restores the most recently removed item through an explicit restore endpoint. The toast is browser-session UI, not a persistent recycle-bin view. Restore endpoints remain usable with known identifiers after restarting.
 - A permanent erase UI, account management, multiple recruiters and cross-role suitability ranking are outside this version's scope.
+
+## Processing notifications
+
+Each position or candidate finishes with an in-app success or error notification naming its file. The upload dialog retains individual queued/processing/completed/failed rows and reports final success/failure totals. An accessible live region announces completion. The header's Notifications button shows an unread count and opens a history panel; opening it marks the current history read, and Clear removes it.
+
+The last 100 notices are persisted in browser localStorage under `role-lens-v3-notifications`, limited to identifiers, status, message, read state and time. Messages include filenames and errors, not document bodies or API keys. Storage errors/corrupt data fall back to an in-memory log. Clearing local runtime records does not clear browser notification history. These are foreground, in-app notifications: no OS permission, browser push, service worker or background processing is provided. Keep the page open until processing finishes. Existing pending requests are not resumed after a reload.
+
+## Key-free local operation
+
+The app can start, list an empty workspace, browse saved results and rubrics, export, remove and restore records without an API key. Model-dependent new uploads still require one. The server reports missing configuration before making any OpenAI request. Tests restart with an explicitly empty key after saving synthetic records, then exercise viewing and removal/restore. No credentials are required for the automated test suite.
 
 ## Input extraction
 
@@ -111,7 +121,7 @@ Keys remain in the server process/environment and are never sent to the browser,
 
 ## Acceptance and verification evidence
 
-The v3 automated suite contains nine tests. The five inherited backend checks cover empty startup, per-position removal/restore and isolation, rubric-before-CV ordering, mocked Decisions/evidence calls, weighted scores, duplicate rejection, failed-call atomicity and input/Origin rejection. Four new checks exercise the filesystem and actual loopback HTTP server:
+The v3 automated suite contains fourteen tests. The five inherited backend checks cover empty startup, per-position removal/restore and isolation, rubric-before-CV ordering, mocked Decisions/evidence calls, weighted scores, duplicate rejection, failed-call atomicity and input/Origin rejection. Four checks exercise the filesystem and actual loopback HTTP server:
 
 1. Local records survive reopening, prefix listing isolates records, path-like keys are encoded, and completed writes leave no temporary file.
 2. Health and an empty position list work without a key, required assets are served, private paths are unavailable and new inference reports a missing key.
@@ -119,3 +129,5 @@ The v3 automated suite contains nine tests. The five inherited backend checks co
 4. Foreign Origins, hostile Host headers, non-JSON POSTs, oversized bodies and unsupported methods are rejected.
 
 `npm run build` produces the local browser assets. Tests use temporary data directories and mock inference; they do not incur API charges or represent fresh live model validation. Test data is entirely synthetic and is not imported by runtime modules. Automated browser interaction and a fresh live inference run are not part of the v3 automated test suite. No claim is made that extraction handles every document layout, or that hiring scores are unbiased, calibrated or sufficient for a final decision.
+
+Five further tests cover both upload queue types, continued processing after file failures, batch-size validation, persistent/unread/clearable bounded notification history, and fallback when browser storage is unavailable or corrupt.
