@@ -11,7 +11,7 @@ V3 retains v2's position picker, file uploads, role-specific rubrics, candidate 
 ## Runtime and configuration
 
 - Runtime: Node.js 22.16+ and npm; ES modules throughout.
-- `npm ci` installs pinned dependencies. `npm start` invokes `prestart` to build assets, then runs `server.mjs`, loading `.env` if present. An absent key does not block startup or access to saved examples.
+- `npm ci` installs pinned dependencies. `npm start` invokes `prestart` to build assets, then runs `server.mjs`, loading `.env` if present. An absent key does not block startup or the empty workspace.
 - Default address: `http://127.0.0.1:4183`. `PORT` can select another integer port from 1 to 65535. The server always binds to IPv4 loopback.
 - `OPENAI_API_KEY` is supplied through the process environment or a Git-ignored `.env`. `.env.example` contains names and a blank value, not a credential.
 - `DATA_DIR` selects a local record directory; the default is `.data` beside the application. A relative override resolves from the process working directory.
@@ -21,7 +21,7 @@ V3 retains v2's position picker, file uploads, role-specific rubrics, candidate 
 
 ### Position home
 
-The home page lists active positions, their companies, classification counts and candidate counts. Search filters title and company locally. Selecting a position loads only its rubric and candidates. A demo-mode notice explains when no API key is configured. Three historical positions with two saved CV evaluations each are available without model calls.
+The home page lists active positions, their companies, classification counts and candidate counts. Search filters title and company locally. Selecting a position loads only its rubric and candidates. A notice explains when no API key is configured. A fresh workspace has no positions or candidates; the empty state invites the user to add a position.
 
 ### Add a position
 
@@ -69,7 +69,7 @@ For criterion weights `w_i` and Decisions scores `s_i` on levels 0–3:
 
 `evidence_coverage = 100 × sum(w_i × s_i / 3) / sum(w_i)`
 
-The score is role-specific documented evidence coverage, not confidence, probability of suitability or a recommendation to hire. Decisions confidence/probabilities and the rubric are available for inspection. No calibration or hiring-outcome validation has been performed. Missing resume evidence is not evidence of inability. The bundled examples are historical v2 API outputs; v3 tests do not claim fresh live inference for those examples.
+The score is role-specific documented evidence coverage, not confidence, probability of suitability or a recommendation to hire. Decisions confidence/probabilities and the rubric are available for inspection. No calibration or hiring-outcome validation has been performed. Missing resume evidence is not evidence of inability. No historical evaluations or personal resume evidence are bundled.
 
 ## Architecture and persistence
 
@@ -81,11 +81,11 @@ The score is role-specific documented evidence coverage, not confidence, probabi
 | `src/store.mjs` | Local JSON record storage using encoded keys and atomic write/rename |
 | `ui/` | Position selection, extraction, uploads, progress, ranking, evidence dialogs and Undo |
 | `scripts/build.mjs` | esbuild browser bundle and copy of HTML, CSS and PDF worker into `dist/` |
-| `seed.json` | Three historical role evaluations with professional resume evidence |
+| `tests/fixtures.mjs` | Synthetic test-only criteria and records; not loaded by the app |
 
 Records use keys such as `jobs/{id}.json` and `candidates/{jobId}/{candidateId}.json`. Each key is URI-encoded into a single filename, preventing keys from navigating outside the data directory. New directories request mode 0700 and record files 0600 where supported. Writes use a unique temporary file followed by rename; interrupted writes do not expose half-written JSON. Temporary files are excluded from listing. Filesystem errors and corrupt records surface as errors rather than silently resetting user data.
 
-The immutable bundled seed supplies defaults. Local records override matching seed IDs, including removal tombstones. Rebuilding or restarting does not modify local records. Original PDF/DOCX/Markdown uploads are not retained. Position records retain extracted role text and criteria; candidate records retain filename/label, fingerprint for newly evaluated CVs, Decisions outputs, score-related evidence and creation time. There is no automatic data retention policy, encryption at rest, backup process or multi-process write coordination. Concurrent operations can have last-write-wins behavior.
+All position and candidate records originate from user uploads. There are no bundled defaults or fallback records. Rebuilding or restarting does not modify local records. Original PDF/DOCX/Markdown uploads are not retained. Position records retain extracted role text and criteria; candidate records retain filename/label, fingerprint for newly evaluated CVs, Decisions outputs, score-related evidence and creation time. There is no automatic data retention policy, encryption at rest, backup process or multi-process write coordination. Concurrent operations can have last-write-wins behavior.
 
 ## Implemented HTTP interface
 
@@ -101,21 +101,21 @@ The immutable bundled seed supplies defaults. Local records override matching se
 | `DELETE /api/jobs/:id/candidates/:candidateId` | Persist candidate soft removal |
 | `POST /api/jobs/:id/candidates/:candidateId/restore` | Restore candidate |
 
-A document is `{filename, sections: [{location, text}]}`. The backend reconstructs its evidence text. Successful creates use 201; normal reads/mutations use 200. Invalid input or model failures use 400, rejected origins/hosts 403, missing records/routes 404, duplicate CVs or a removed in-flight position 409. The local adapter rejects oversized bodies with 413, non-JSON POSTs with 415 and unsupported API methods with 405. GET assets are restricted to `/`, `/app.js`, `/style.css` and `/pdf-worker.mjs`; `.env`, application sources and raw seed files are not static routes.
+A document is `{filename, sections: [{location, text}]}`. The backend reconstructs its evidence text. Successful creates use 201; normal reads/mutations use 200. Invalid input or model failures use 400, rejected origins/hosts 403, missing records/routes 404, duplicate CVs or a removed in-flight position 409. The local adapter rejects oversized bodies with 413, non-JSON POSTs with 415 and unsupported API methods with 405. GET assets are restricted to `/`, `/app.js`, `/style.css` and `/pdf-worker.mjs`; `.env`, application sources and runtime records are not static routes.
 
 ## Security and external dependencies
 
 This is a trusted single-user local application, not an authenticated shared web service. Loopback binding is the main reachability boundary. Allowed Host values are `127.0.0.1:<actual port>` and `localhost:<actual port>`. Supplied Origins must match the request origin. JSON-only POSTs and absence of permissive CORS headers further restrict browser-origin mutation. Local CLI clients may omit Origin. These controls do not protect against malicious processes already running as the same user, or against exposure through a tunnel/proxy.
 
-Keys remain in the server process/environment and are never sent to the browser, written to application records or included in the public repository. `.env`, runtime data, dependencies, generated assets, key files and logs are ignored by Git. The source repository contains professional resume evidence in seed examples; it is not an anonymized sample dataset. npm installation requires network access, and new inference requires OpenAI. Apart from inference and user-followed source links, the built UI does not require remote fonts, scripts, authentication or storage.
+Keys remain in the server process/environment and are never sent to the browser, written to application records or included in the public repository. `.env`, runtime data, dependencies, generated assets, key files and logs are ignored by Git. The current source tree contains no uploaded resume evidence or historical evaluation dataset. Earlier Git commits may still contain the previously bundled examples; this change does not rewrite repository history. npm installation requires network access, and new inference requires OpenAI. Apart from inference and user-followed source links, the built UI does not require remote fonts, scripts, authentication or storage.
 
 ## Acceptance and verification evidence
 
-The v3 automated suite contains nine tests. The five inherited backend checks cover seeded examples, per-position removal/restore and isolation, rubric-before-CV ordering, mocked Decisions/evidence calls, weighted scores, duplicate rejection, failed-call atomicity and input/Origin rejection. Four new checks exercise the filesystem and actual loopback HTTP server:
+The v3 automated suite contains nine tests. The five inherited backend checks cover empty startup, per-position removal/restore and isolation, rubric-before-CV ordering, mocked Decisions/evidence calls, weighted scores, duplicate rejection, failed-call atomicity and input/Origin rejection. Four new checks exercise the filesystem and actual loopback HTTP server:
 
 1. Local records survive reopening, prefix listing isolates records, path-like keys are encoded, and completed writes leave no temporary file.
-2. Demo health and all three jobs work without a key, required assets are served, private paths are unavailable and new inference reports a missing key.
+2. Health and an empty position list work without a key, required assets are served, private paths are unavailable and new inference reports a missing key.
 3. Mock-generated roles and candidates survive a full server restart; removal and restore persist through the HTTP API.
 4. Foreign Origins, hostile Host headers, non-JSON POSTs, oversized bodies and unsupported methods are rejected.
 
-`npm run build` produces the local browser assets. Tests use temporary data directories and mock inference; they do not incur API charges or represent fresh live model validation. V2 previously exercised the inherited upload UI with actual PDF/DOCX inputs. Automated browser interaction and a fresh live inference run are not part of the v3 automated test suite. No claim is made that extraction handles every document layout, or that hiring scores are unbiased, calibrated or sufficient for a final decision.
+`npm run build` produces the local browser assets. Tests use temporary data directories and mock inference; they do not incur API charges or represent fresh live model validation. Test data is entirely synthetic and is not imported by runtime modules. Automated browser interaction and a fresh live inference run are not part of the v3 automated test suite. No claim is made that extraction handles every document layout, or that hiring scores are unbiased, calibrated or sufficient for a final decision.

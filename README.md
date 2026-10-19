@@ -11,7 +11,7 @@ npm ci
 npm start
 ```
 
-Open **http://127.0.0.1:4183**. `npm start` builds browser assets automatically. The three example positions and their six saved evaluations work without an API key.
+Open **http://127.0.0.1:4183**. `npm start` builds browser assets automatically. The app starts with no positions or candidates.
 
 For new evaluations, copy `.env.example` to `.env` and set your own `OPENAI_API_KEY`, then restart. Alternatively supply the key in the process environment. Keys stay on the server and are excluded from Git. Standard OpenAI API charges apply; document text is sent to OpenAI when you create a rubric or evaluate a CV. There are no synthetic fallback scores.
 
@@ -35,11 +35,11 @@ Supported files: PDF, Markdown (`.md`) and DOCX, up to 10 MB per file. PDF must 
 
 ## Data and models
 
-The bundled examples are Flybuys AI Platform, Kinetic Data Engineer, and Compare the Market AI Data Engineer, each evaluated against the Nicholas Welch 2020 and 2026 resume versions. These are saved historical v2 results, not new v3 live runs. Their professional evidence and evaluation results are included in this public repository; original CV files and private local runtime records are not.
+No roles, CVs, candidate identities or evaluation results are bundled. Add your own position description to begin.
 
 New rubric generation and evidence extraction use `gpt-5.6-sol` with low reasoning. Classification uses `gpt-6-luna` through OpenAI Decisions. Weighted evidence coverage is `sum(weight × score / 3) / sum(weight) × 100`. It is not a calibrated hiring probability. Missing evidence is not proof of absent skill; a person should review the rubric and evidence and verify gaps before shortlisting.
 
-Local changes are saved under ignored `.data/`, as atomic JSON record writes. No database service is required. Original uploads are not saved; role text, rubrics, candidate evidence and Decisions results are retained. The bundled seed is overlaid by local records, so restarting or rebuilding preserves uploads and removals.
+Local changes are saved under ignored `.data/`, as atomic JSON record writes. No database service is required. Original uploads are not saved; role text, rubrics, candidate evidence and Decisions results are retained. Restarting or rebuilding preserves positions and CV results that you subsequently add.
 
 ## Development and specification
 

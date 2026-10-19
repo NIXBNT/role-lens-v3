@@ -45,5 +45,5 @@ const onProgress=()=>{};
    const original=item.quotes.length;item.quotes=item.quotes.filter(q=>resume.sections.some(s=>s.location===q.location&&normalize(s.text).includes(normalize(q.text))));
    item.verification=original===item.quotes.length?'All displayed quotes verified against source text.':`${original-item.quotes.length} proposed quotes omitted because they could not be verified against source text.`;
   }
-  return {id,label:label||(resume.filename.startsWith('Nicholas Welch Resume')?`Nicholas Welch ${year}`.trim():resume.filename.replace(/\.(pdf|md|docx)$/i,'')),year,filename:resume.filename,decisions,evidence:evidence.value.items};
+  return {id,label:label||resume.filename.replace(/\.(pdf|md|docx)$/i,''),year,filename:resume.filename,decisions,evidence:evidence.value.items};
 }

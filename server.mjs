@@ -10,8 +10,7 @@ const assets={'/':['index.html','text/html; charset=utf-8'],'/app.js':['app.js',
 
 export async function createLocalServer({dataDirectory=process.env.DATA_DIR||path.join(ROOT,'.data'),apiKey=process.env.OPENAI_API_KEY,requestOverride}={}) {
   const store=new FileStore(dataDirectory);await store.init();
-  const seed=JSON.parse(await fs.readFile(path.join(ROOT,'seed.json'),'utf8'));
-  const api=createBackend(seed,{requestOverride});
+  const api=createBackend({requestOverride});
   const env={store,OPENAI_API_KEY:apiKey};
   const server=http.createServer(async(req,res)=>{
     const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
@@ -49,7 +48,7 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   server.on('error',error=>{console.error(error.code==='EADDRINUSE'?`Port ${port} is in use. Set PORT to a different port.`:error.message);process.exitCode=1;});
   server.listen(port,'127.0.0.1',()=>{
     console.log(`Role Lens v3: http://127.0.0.1:${port}`);
-    console.log(process.env.OPENAI_API_KEY?'Live inference is configured.':'Demo results are available. Set OPENAI_API_KEY in .env to evaluate new uploads.');
+    console.log(process.env.OPENAI_API_KEY?'Live inference is configured.':'Set OPENAI_API_KEY in .env to add positions and evaluate CVs.');
   });
   for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>server.close(()=>process.exit(0)));
 }

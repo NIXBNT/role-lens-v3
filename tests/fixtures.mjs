@@ -1,0 +1,4 @@
+// Synthetic test-only records; never imported by the application.
+export const criteria=Array.from({length:8},(_,i)=>({id:`criterion_${i}`,title:`Test skill ${i+1}`,question:'What professional evidence is documented?',basis:'Synthetic test role requirement.',weight:12.5,preferred:false,levels:[{label:'None',description:'Not documented.'},{label:'Adjacent',description:'Limited evidence.'},{label:'Direct',description:'Direct evidence.'},{label:'Strong',description:'Strong concrete evidence.'}]}));
+export const fixtureJobs=['alpha','beta'].map(id=>({id,title:`Synthetic role ${id}`,company:'Test company',criteria,createdAt:'2026-01-01T00:00:00Z'}));
+export const fixtureCandidates=['one','two'].map(id=>({id,label:`Synthetic candidate ${id}`,filename:`${id}.md`,decisions:{answers:criteria.map(c=>({name:c.id,type:'score',score:2}))},evidence:[]}));

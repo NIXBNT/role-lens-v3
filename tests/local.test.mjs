@@ -6,10 +6,9 @@ import os from 'node:os';
 import path from 'node:path';
 import {createLocalServer} from '../server.mjs';
 import {FileStore} from '../src/store.mjs';
-const seed=JSON.parse(await fs.readFile(new URL('../seed.json',import.meta.url)));
+import {criteria} from './fixtures.mjs';
 const document={filename:'engineer.md',sections:[{location:'Markdown',text:'Production software engineering role building Python and SQL services and APIs, testing pipelines and mentoring engineers.'}]};
 const liveMock=async(endpoint,body)=>{
- const criteria=seed[0].criteria;
  if(endpoint==='decisions')return {answers:criteria.map(c=>({name:c.id,type:'score',score:2})),model:'gpt-6-luna'};
  const value=body.text.format.name==='role_questions'?{title:'Test Engineer',criteria}:{items:criteria.map(c=>({id:c.id,quotes:[],gap:'Verify evidence in interview.',followup:'Describe a production example.'}))};
  return {output:[{content:[{type:'output_text',text:JSON.stringify(value)}]}]};
@@ -28,12 +27,12 @@ test('file store persists records, filters prefixes and encodes unsafe path comp
  const reopened=new FileStore(dir);assert.deepEqual(await reopened.get('jobs/example.json'),{a:1});assert.deepEqual(await reopened.list('jobs/'),['jobs/example.json']);assert.equal((await fs.readdir(dir)).length,2);assert.equal(await reopened.get('missing'),null);
  await reopened.put('jobs/example.json',{a:3});assert.deepEqual(await s.get('jobs/example.json'),{a:3});assert.ok(!(await fs.readdir(dir)).some(n=>n.startsWith('.tmp-')));
 });
-test('local HTTP demo needs no key and only exposes application routes',async t=>{
+test('empty local workspace needs no key and only exposes application routes',async t=>{
  const app=await start(await workspace(t),{apiKey:''});t.after(app.close);
  const health=await json(app.base,'/api/health');assert.equal(health.status,200);assert.deepEqual(health.data,{status:'ok',version:3,apiKeyConfigured:false});
- const jobs=await json(app.base,'/api/jobs');assert.equal(jobs.data.jobs.length,3);
+ const jobs=await json(app.base,'/api/jobs');assert.equal(jobs.data.jobs.length,0);
  assert.equal((await fetch(app.base+'/')).status,200);assert.equal((await fetch(app.base+'/pdf-worker.mjs')).status,200);
- assert.equal((await fetch(app.base+'/.env')).status,404);assert.equal((await fetch(app.base+'/seed.json')).status,404);
+ assert.equal((await fetch(app.base+'/.env')).status,404);assert.equal((await fetch(app.base+'/src/backend.mjs')).status,404);
  const missing=await json(app.base,'/api/jobs','POST',{document});assert.equal(missing.status,400);assert.match(missing.data.error,/OPENAI_API_KEY/);
 });
 test('uploaded role and CV survive restart; removal and undo persist on disk',async t=>{
