@@ -1,0 +1,19 @@
+{
+  "name": "role-lens-v3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "prestart": "npm run build"
+  },
+  "dependencies": {
+    "esbuild": "0.25.12",
+    "fflate": "0.8.3",
+    "pdfjs-dist": "5.4.624"
+  },
+  "engines": {
+    "node": ">=22.16"
+  }
+}
