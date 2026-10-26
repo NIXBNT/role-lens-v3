@@ -131,3 +131,23 @@ The v3 automated suite contains fourteen tests. The five inherited backend check
 `npm run build` produces the local browser assets. Tests use temporary data directories and mock inference; they do not incur API charges or represent fresh live model validation. Test data is entirely synthetic and is not imported by runtime modules. Automated browser interaction and a fresh live inference run are not part of the v3 automated test suite. No claim is made that extraction handles every document layout, or that hiring scores are unbiased, calibrated or sufficient for a final decision.
 
 Five further tests cover both upload queue types, continued processing after file failures, batch-size validation, persistent/unread/clearable bounded notification history, and fallback when browser storage is unavailable or corrupt.
+
+
+## Light editorial revision
+
+Reference: `design-templates/01-editorial.png`. This revision replaces ranking cards with a candidate-by-criterion comparison and a transposed rubric coverage matrix. Candidate evidence opens as a page with a coverage ring, evidence/rubric columns, source-text viewer, summary, interview prompts and saved notes. The main navigation provides Positions, Candidates, Templates and Insights. Search, department/status filters, sorting, position metadata editing, and role activity are implemented.
+
+Additional local API contracts:
+
+| Route | Behavior |
+| --- | --- |
+| `GET /api/candidates` | List non-removed evaluations from non-removed positions as lightweight candidate-bank summaries, including `hasSource`. |
+| `POST /api/jobs/:id/settings` | Save `title`, `company`, `department`, `description`, `status` (`active`, `draft`, `archived`); preserve rubric/results. |
+| `POST /api/jobs/:id/candidates/:cid/sources` | Save up to 30 reviewer-added HTTP(S) links; links do not change scores. |
+| `POST /api/jobs/:id/candidates/:cid/notes` | Save notes up to 20,000 characters; preserve evaluation. |
+| `POST /api/jobs` with `templateId` | Copy a saved role description and rubric into a new position with no candidates and no inference call. |
+| `POST /api/jobs/:id/candidates` with `sourceJobId`, `sourceCandidateId` | Re-evaluate saved source CV against target rubric; preserve duplicate-upload protection. |
+
+New candidate records retain the validated extracted `resume`, plus `notes`. Older records do not receive invented source text. The UI explains when full-text viewing or reuse is unavailable. Exports include retained source text and notes. Position records have optional metadata, `updatedAt` and activity; old records default to General department and active status. Candidate add/remove/restore and metadata updates record activity. Archived is a reversible organizational status, separate from soft removal.
+
+Validation: backend regression tests cover metadata/notes, template copying without inference, candidate-bank filtering, re-evaluation rather than score copying, and duplicate protection. Existing local-server persistence, upload and notification tests remain applicable. Browser review uses isolated synthetic data, never the production `.data/` folder or paid inference.
